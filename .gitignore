@@ -1,0 +1,33 @@
+# Environments — never commit. .env.example holds placeholder values
+# and is committed; .env holds real keys + JWTs and is not.
+.env
+.env.local
+.env.*.local
+
+# Virtualenvs (per-module)
+.venv/
+venv/
+env/
+
+# Python build artefacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Mock-service runtime artefacts (module 02)
+.logs/
+.pids
+.pids.*
+.pid
+.startup.log
+*.log
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
