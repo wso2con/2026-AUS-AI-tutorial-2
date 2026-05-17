@@ -16,6 +16,7 @@ import uuid
 
 import jwt
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -26,6 +27,12 @@ SHARED_API_KEY = os.environ.get("BOOKING_SHARED_KEY", "shared-agent-key")
 REQUIRED_SCOPE = "booking.write"
 
 app = FastAPI(title="Mock Booking Service")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class BookingRequest(BaseModel):

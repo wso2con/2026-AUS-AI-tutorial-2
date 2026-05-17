@@ -34,11 +34,5 @@ The same `agent.py` is reused unchanged across every module.
 
 ```bash
 git clone <repo-url> ai-lab-2026
-cd ai-lab-2026/00-baseline
-python3.11 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-export OPENAI_API_KEY=sk-...
-python main.py
-# → listening on http://localhost:8000
 ```
 

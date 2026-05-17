@@ -184,8 +184,38 @@ chain in-band:
   `act` claim in the token-exchange JWT.
 - `confirmation` — ties this booking to a specific reservation record.
 
+## Or: try it in the browser
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+A small pill above the chat input reads *"Not signed in — click to sign
+in as Guest 42"*. The pill is the website's stand-in for an Asgardeo
+hosted login; clicking it `POST`s to `mock_idp/oauth2/login` and the
+returned user token rides along on every subsequent chat as
+`context.user_token`.
+
+**The contrast moment.** Skip the pill on a fresh load and ask the
+concierge to book a room. Tail `.logs/mock_booking.log`:
+
+```
+BOOKING confirmed | caller=grand-meridian-concierge | on_behalf_of=<none> | scopes=booking.write
+```
+
+The booking went through, but the audit chain is incomplete — exactly the
+shared-key shape from step 1. Reload, click the pill, ask the same
+question:
+
+```
+BOOKING confirmed | caller=grand-meridian-concierge | on_behalf_of=user-42 | scopes=booking.write
+```
+
+The `user_token` is what populates `on_behalf_of`. The agent's identity
+stays the same; the user's identity is what changes.
+
 ## Going further
 
 - [RFC 8693 — OAuth 2.0 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693)
 - [Register and manage AI agents in Asgardeo](https://wso2.com/asgardeo/docs/guides/agentic-ai/ai-agents/register-and-manage-agents/)
-- [WSO2 Agent Manager](https://wso2.com/agent-manager)
+- [WSO2 Agent Manager](https://wso2.com/agent-platform/agent-manager/)

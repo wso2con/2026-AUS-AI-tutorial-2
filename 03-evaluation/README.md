@@ -27,14 +27,70 @@ The eval suite lives in `evals/`:
 
 - `conversations.py` — ten reference user messages with the tool each
   one is expected to (or expected NOT to) call.
-- `evaluators.py` — five evaluators. Three rule-based (tool efficiency,
-  step success rate, latency under SLA), two LLM-judge (helpfulness,
-  groundedness). Each returns a numeric value, a pass/fail flag, and a
-  one-line reason.
+- `evaluators.py` — five evaluators (detailed below).
 - `run_eval.py` — orchestrator. Invokes the agent in-process for each
   conversation, runs every evaluator, prints a per-conversation table
   and an aggregate summary, exits non-zero if any aggregate pass-rate
   falls below `PASS_THRESHOLD` (default 80%).
+
+### The evaluators
+
+Each evaluator returns a numeric value, a pass/fail flag, and a one-line
+reason. The five run on every reference conversation. Together they
+cover **behavior** (did the agent do the right thing?), **quality**
+(was the answer any good?), and **cost** (was it fast enough?). A single
+metric is easy to game; the matrix is what catches regressions.
+
+**Rule-based** — deterministic, no LLM cost, run on the message trail
+and the latency clock:
+
+- `tool_efficiency` — did the agent call the **expected** tool, and only
+  that tool? Score is `expected_seen / (expected_seen + other_seen)`;
+  passes at `1.0`. When `expected_tool` is `none`, passes only when zero
+  tool calls were made. Multiple calls of the expected tool are allowed
+  (comparison prompts often re-invoke the same tool); unexpected tools
+  drag the score down.
+- `step_success_rate` — of the tool calls made, how many returned a
+  result without an `{"error": ...}` payload? Catches tool-side failures
+  (bad arguments, unhandled cases) even when the agent's chat reply
+  "sounds" fine. Passes at `1.0`.
+- `latency_under_sla` — end-to-end wall time per turn. Passes when
+  `<= LATENCY_SLA_MS` (default `8000`). Tracks operational regressions:
+  a prompt change that doubles tokens shows up here before users
+  complain.
+
+**LLM-as-judge** — gpt-4o-mini (override via `JUDGE_MODEL`) scoring on a
+0–100 rubric, `temperature=0.0` for repeatability, JSON-mode responses:
+
+- `helpfulness` — did the response **actually answer** the user's
+  question? Rubric anchors: 100 = directly addresses with actionable
+  detail, 60 = partial answer requiring follow-up, 20 = irrelevant or
+  rude. Passes at `>= HELPFULNESS_THRESHOLD` (default `80`). Sees the
+  user message and the assistant response only — no tool results — so
+  it scores presentation, not truth.
+- `groundedness` — were factual claims (prices, names, hours, items)
+  **backed by tool results**? The judge sees the user message, the JSON
+  returns from every tool the agent invoked, and the final assistant
+  response. Rubric anchors: 100 = every claim traceable, 60 = one minor
+  invented detail, 20 = ignored tools entirely. Pure policy answers
+  (no factual claims) score 100. Passes at `>= GROUNDEDNESS_THRESHOLD`
+  (default `80`). This is the evaluator that catches fluent
+  fabrication — high helpfulness with low groundedness is the
+  pathology Step 2 demonstrates.
+
+| Evaluator              | What it sees                   | What it catches                                  | Cost          |
+|------------------------|--------------------------------|--------------------------------------------------|---------------|
+| `tool_efficiency`      | Tool-call trail                | Agent skipping or substituting tools             | Free          |
+| `step_success_rate`    | Tool return values             | Tool errors masked by smooth chat replies        | Free          |
+| `latency_under_sla`    | Wall clock                     | Performance regressions from prompt/model drift  | Free          |
+| `helpfulness`          | User msg + assistant response  | Off-topic, evasive, or low-effort answers        | 1 LLM call    |
+| `groundedness`         | + tool results                 | Fluent fabrication; ignoring tool output         | 1 LLM call    |
+
+The set is deliberately small and orthogonal — five complementary signals
+beat fifteen overlapping ones. Add domain-specific evaluators
+(price-accuracy, hours-accuracy, safety-policy) by appending to the
+`EVALUATORS` list in `evaluators.py`; each one is a function that takes
+the per-conversation context and returns an `EvalScore`.
 
 ## Step 1 — Baseline evaluation
 
@@ -89,14 +145,6 @@ because the model filled the gap with invented prices, hours, and
 amenities. `helpfulness` stays at 100% — fabricated responses still read
 as complete, on-topic, useful answers.
 
-> **Calibration note.** If gpt-4o still shrugs off `BROKEN_PROMPT` for
-> you, use a smaller agent model for the broken run — it'll follow the
-> weak prompt more literally:
->
-> ```bash
-> OPENAI_MODEL=gpt-4o-mini SYSTEM_PROMPT_VARIANT=broken python -m evals.run_eval
-> ```
-
 ## Step 3 — Read the judge's reasoning
 
 The harness prints the judge's per-conversation reason directly in the
@@ -126,4 +174,7 @@ python -m evals.run_eval
 
 ## Going further
 
-- [WSO2 Agent Manager evaluation](https://wso2.com/agent-manager)
+- [G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment](https://arxiv.org/abs/2303.16634)
+- [Hamel Husain — "Your AI product needs evals"](https://hamel.dev/blog/posts/evals/)
+- [OpenAI Evals](https://github.com/openai/evals)
+- [WSO2 Agent Manager evaluation](https://wso2.com/agent-platform/agent-manager/)

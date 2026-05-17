@@ -11,8 +11,8 @@ unchanged from module 00.
 
 In AM:
 
-1. Open the project that owns this agent — for the lab, create or use one
-   called `hospitality`.
+1. Open the project that will own this agent — the default project is
+   fine, or pick one of your own.
 2. Click **Add Agent** and pick **Externally-Hosted Agent**.
 3. Give the agent a name (`Grand Meridian Concierge`) and a short
    description.
@@ -94,8 +94,18 @@ tab shows the arguments JSON in and the return JSON out. Each
 response, the **Tools** tab shows the tool catalog, and the **Attributes**
 tab shows raw OTEL GenAI attributes including token counts.
 
+## Or: try it in the browser
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+Same widget as module 00. Every chat from the page produces a trace in AM
+just like the curl examples do. The traces in **Observability → Traces**
+contain the full LLM reasoning either way.
+
 ## Going further
 
 - [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
 - [`amp-instrumentation` on PyPI](https://pypi.org/project/amp-instrumentation/)
-- [WSO2 Agent Manager](https://wso2.com/agent-manager)
+- [WSO2 Agent Manager](https://wso2.com/agent-platform/agent-manager/)

@@ -8,7 +8,59 @@ Provider** with a prompt-decorator guardrail attached). Same agent code,
 same prompt — the guardrail injects a pricing disclaimer when the
 response touches pricing.
 
-## Setup — configure an LLM Service Provider in AM
+## Setup — install deps and seed `.env`
+
+```bash
+cd 04-governance
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+cp .env.example .env
+# Edit .env — the AMP_OTEL_ENDPOINT / AMP_AGENT_API_KEY pair from
+# module 01 is still required (this module produces traces too).
+# Leave OPENAI_BASE_URL empty for now; we set it in step 3.
+set -a && source .env && set +a
+```
+
+## Step 1 — No governance
+
+Start the agent with `OPENAI_API_KEY` pointed directly at OpenAI:
+
+```bash
+unset OPENAI_BASE_URL    # ensure we are NOT going through AM
+amp-instrument python main.py
+```
+
+Open the chat widget and ask about pricing:
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+Type: *"What is the price difference between a standard room and a
+deluxe suite?"* The reply comes back along the lines of:
+
+```
+A standard room is $280 per night and a deluxe suite is $340 per night,
+so the deluxe suite is $60 more per night.
+```
+
+No disclaimer. Keep this tab open; we'll come back to it after switching
+to governed mode.
+
+<details>
+<summary>Or via curl</summary>
+
+```bash
+curl -s -X POST http://localhost:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What is the price difference between a standard room and a deluxe suite?",
+       "session_id":"ungoverned","context":{}}' | jq -r .response
+```
+
+</details>
+
+## Step 2 — Configure an LLM Service Provider in AM
 
 The LLM Service Provider (LSP) is an organization-level abstraction in AM.
 
@@ -31,49 +83,7 @@ The LLM Service Provider (LSP) is an organization-level abstraction in AM.
 
 The agent never sees the real upstream credential.
 
-## Setup — install deps and seed `.env`
-
-```bash
-cd 04-governance
-python3.11 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-cp .env.example .env
-# Edit .env — the AMP_OTEL_ENDPOINT / AMP_AGENT_API_KEY pair from
-# module 01 is still required (this module produces traces too).
-# Leave OPENAI_BASE_URL empty for now; we set it in step 2.
-set -a && source .env && set +a
-```
-
-## Step 1 — BYO mode (no governance)
-
-Start the agent with `OPENAI_API_KEY` pointed directly at OpenAI:
-
-```bash
-unset OPENAI_BASE_URL    # ensure we are NOT going through AM
-amp-instrument python main.py
-```
-
-`/health` should report `governed: false`. Send a pricing-related
-question:
-
-```bash
-curl -s -X POST http://localhost:8000/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"What is the price difference between a standard room and a deluxe suite?",
-       "session_id":"ungoverned","context":{}}' | jq -r .response
-```
-
-Output looks something like:
-
-```
-A standard room is $280 per night and a deluxe suite is $340 per night,
-so the deluxe suite is $60 more per night.
-```
-
-No disclaimer.
-
-## Step 2 — Switch to governed mode
+## Step 3 — Switch to governed mode
 
 Point the agent at AM's LLM Service Provider gateway by replacing the two
 OpenAI env vars. The agent code does not change;
@@ -87,16 +97,8 @@ export OPENAI_API_KEY=eyJhbGciOi...    # AM-issued JWT for the LSP, copy from th
 amp-instrument python main.py
 ```
 
-`/health` now reports `governed: true`. Send the same prompt:
-
-```bash
-curl -s -X POST http://localhost:8000/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"What is the price difference between a standard room and a deluxe suite?",
-       "session_id":"governed","context":{}}' | jq -r .response
-```
-
-Output now ends with:
+Go back to the widget tab from Step 1 and ask the same pricing question 
+again. The reply now ends with the disclaimer:
 
 ```
 A standard room is $280 per night and a deluxe suite is $340 per night,
@@ -105,7 +107,29 @@ so the deluxe suite is $60 more per night.
 Rates and availability subject to confirmation at time of booking.
 ```
 
-## Step 3 — A non-pricing question
+Same agent code, same prompt, same widget — only the gateway changed.
+
+<details>
+<summary>Or via curl</summary>
+
+```bash
+curl -s -X POST http://localhost:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What is the price difference between a standard room and a deluxe suite?",
+       "session_id":"governed","context":{}}' | jq -r .response
+```
+
+</details>
+
+## Step 4 — A non-pricing question
+
+In the same widget tab, ask: *"What restaurants do you recommend
+nearby?"* The reply comes back without the disclaimer. The decorator is
+conditional — the model evaluates whether the trigger applies and
+appends the disclaimer only when it does.
+
+<details>
+<summary>Or via curl</summary>
 
 ```bash
 curl -s -X POST http://localhost:8000/chat \
@@ -114,25 +138,9 @@ curl -s -X POST http://localhost:8000/chat \
        "session_id":"governed","context":{}}' | jq -r .response
 ```
 
-The response comes back without the disclaimer. The decorator is
-conditional — the model evaluates whether the trigger applies and
-appends the disclaimer only when it does.
-
-## Step 4 — The governance is observable through the response
-
-Open AM's **Observability → Traces** panel and click into a governed-mode
-trace. The `ChatOpenAI.chat` span shows the same surface as module 01:
-the prompt the agent sent, the completion the LLM returned, model
-identity, token counts, latency.
-
-The completion **ends with the disclaimer** on pricing questions and
-**doesn't** on non-pricing questions — that is the in-band evidence the
-guardrail fired. AM does not currently surface the gateway-side
-prompt-decoration step itself as its own span; the disclaimer's presence
-in the captured response is the proof of enforcement, and AM holds every
-completion under its retention policy.
+</details>
 
 ## Going further
 
-- [WSO2 Agent Manager LLM Service Provider](https://wso2.com/agent-manager)
+- [WSO2 Agent Manager LLM Service Provider](https://wso2.com/agent-platform/agent-manager/)
 - [Azure AI Content Safety](https://azure.microsoft.com/en-us/products/ai-services/ai-content-safety) and [AWS Bedrock Guardrails](https://aws.amazon.com/bedrock/guardrails/)

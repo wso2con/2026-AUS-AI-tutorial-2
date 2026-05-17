@@ -23,6 +23,7 @@ import time
 
 import jwt
 from fastapi import FastAPI, Form, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 ISSUER = "http://mock-idp.local"
@@ -39,6 +40,12 @@ CLIENTS: dict[str, dict] = {
 }
 
 app = FastAPI(title="Mock IdP")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class LoginRequest(BaseModel):

@@ -34,6 +34,17 @@ curl -s -X POST http://localhost:8000/chat \
        "session_id": "smoke-1", "context": {}}' | jq
 ```
 
+## Or: try it in the browser
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+The landing page for The Grand Meridian loads. Click the launcher in the
+bottom-right corner, pick a chip ("Check availability", "Room service",
+"Things to do nearby"), and watch the agent reply in the chat panel. Same
+`/chat` contract as the curl example above.
+
 ## Multi-tool prompt (used in module 01)
 
 ```bash
