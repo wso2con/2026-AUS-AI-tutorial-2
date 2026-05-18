@@ -56,7 +56,18 @@ no requests yet.
 
 ## Step 4 — A simple prompt
 
-Send a message that does not invoke any tools:
+Open the chat widget and ask a question that doesn't invoke any tools:
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+Type: *"What time is it?"*
+
+Refresh **Observability → Traces**. One trace appears. Click into it.
+
+<details>
+<summary>Or via curl</summary>
 
 ```bash
 curl -s -X POST http://localhost:8000/chat \
@@ -64,7 +75,7 @@ curl -s -X POST http://localhost:8000/chat \
   -d '{"message": "What time is it?", "session_id": "demo-1", "context": {}}' | jq
 ```
 
-Refresh **Observability → Traces**. One trace appears. Click into it.
+</details>
 
 Click the `ChatOpenAI.chat` span. The right panel exposes three tabs:
 
@@ -79,12 +90,8 @@ Click the `ChatOpenAI.chat` span. The right panel exposes three tabs:
 
 ## Step 5 — A multi-tool prompt
 
-```bash
-curl -s -X POST http://localhost:8000/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message": "Compare a junior suite and the presidential suite for a 3-night stay",
-       "session_id": "demo-2", "context": {}}' | jq
-```
+In the same widget tab, type: *"Compare a junior suite and the
+presidential suite for a 3-night stay."*
 
 A new trace lands with a richer hierarchy — multiple `execute_task agent`
 branches with their own `ChatOpenAI.chat` spans, plus tool-execution spans
@@ -94,15 +101,17 @@ tab shows the arguments JSON in and the return JSON out. Each
 response, the **Tools** tab shows the tool catalog, and the **Attributes**
 tab shows raw OTEL GenAI attributes including token counts.
 
-## Or: try it in the browser
+<details>
+<summary>Or via curl</summary>
 
 ```bash
-open web/index.html         # macOS; Linux: xdg-open web/index.html
+curl -s -X POST http://localhost:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "Compare a junior suite and the presidential suite for a 3-night stay",
+       "session_id": "demo-2", "context": {}}' | jq
 ```
 
-Same widget as module 00. Every chat from the page produces a trace in AM
-just like the curl examples do. The traces in **Observability → Traces**
-contain the full LLM reasoning either way.
+</details>
 
 ## Going further
 

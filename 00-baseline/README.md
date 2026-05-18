@@ -27,6 +27,20 @@ python main.py
 
 ## Smoke test
 
+Open the chat widget:
+
+```bash
+open web/index.html         # macOS; Linux: xdg-open web/index.html
+```
+
+The landing page for The Grand Meridian loads. Click the launcher in
+the bottom-right corner, then pick a chip ("Check availability", "Room
+service", "Things to do nearby") or type a question of your own. The
+agent replies in the chat panel.
+
+<details>
+<summary>Or via curl</summary>
+
 ```bash
 curl -s -X POST http://localhost:8000/chat \
   -H 'Content-Type: application/json' \
@@ -34,18 +48,19 @@ curl -s -X POST http://localhost:8000/chat \
        "session_id": "smoke-1", "context": {}}' | jq
 ```
 
-## Or: try it in the browser
-
-```bash
-open web/index.html         # macOS; Linux: xdg-open web/index.html
-```
-
-The landing page for The Grand Meridian loads. Click the launcher in the
-bottom-right corner, pick a chip ("Check availability", "Room service",
-"Things to do nearby"), and watch the agent reply in the chat panel. Same
-`/chat` contract as the curl example above.
+</details>
 
 ## Multi-tool prompt (used in module 01)
+
+In the widget, type: *"Compare a junior suite and the presidential
+suite for a 3-night stay."*
+
+Server logs show one inbound HTTP request and one outbound response —
+the two tool calls and the model's reasoning in between are not visible.
+Module 01 fixes that.
+
+<details>
+<summary>Or via curl</summary>
 
 ```bash
 curl -s -X POST http://localhost:8000/chat \
@@ -54,6 +69,4 @@ curl -s -X POST http://localhost:8000/chat \
        "session_id": "crack-1", "context": {}}' | jq
 ```
 
-Server logs show one inbound HTTP request and one outbound response —
-the two tool calls and the model's reasoning in between are not visible.
-Module 01 fixes that.
+</details>
