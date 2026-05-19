@@ -13,6 +13,9 @@
 
 ## The use case
 
+<img width="1253" height="374" alt="Screenshot 2026-05-19 at 13 55 29" src="https://github.com/user-attachments/assets/d2b94bdc-f874-4b02-b920-fcee4c95f619" />
+
+
 A hotel concierge agent for *The Grand Meridian*, built on LangGraph +
 FastAPI + OpenAI (~300 LOC). Three tools backed by static hotel data:
 
