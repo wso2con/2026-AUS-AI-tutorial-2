@@ -2,8 +2,7 @@
 
 **WSO2 Conference 2026 — Lab session**
 
-## The arc
-
+## Tutorial Plan
 ```
 00 — Baseline        A traditional agent deployment.
 01 — Observability   OTEL GenAI traces in AM.
