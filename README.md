@@ -30,7 +30,10 @@ The same `agent.py` is reused unchanged across every module.
 - **Python 3.11 or 3.12.** Avoid 3.13 / 3.14. macOS: `brew install python@3.11`.
 - **WSO2 Agent Manager instance** with permission to register an
   Externally-Hosted Agent and read its trace panel. Modules 01–04 need
-  AM env vars; module 00 runs without AM.
+  AM env vars; module 00 runs without AM. The fastest path is to sign
+  up for the cloud version at
+  [console.agent-manager.cloud.wso2.com](https://console.agent-manager.cloud.wso2.com)
+  — no local deployment needed.
 - An OpenAI API key (`OPENAI_API_KEY=sk-...`).
 - A clone of this repo.
 
