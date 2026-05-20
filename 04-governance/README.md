@@ -72,9 +72,7 @@ The LLM Service Provider (LSP) is an organization-level abstraction in AM.
 2. **Attach a guardrail.** On the same provider, attach a **Prompt
    Decorator** guardrail with content along these lines:
 
-   > If the response mentions pricing, room rates, or availability,
-   > append exactly one line at the end: *"Rates and availability subject
-   > to confirmation at time of booking."*
+   > If the response mentions pricing, room rates, or availability, append exactly one line at the end: *"Rates and availability subject to confirmation at time of booking."*
 
 3. **Attach the LSP to the agent.** Open the agent you registered in
    module 01 (`Grand Meridian Concierge`) and pick this LSP from its
