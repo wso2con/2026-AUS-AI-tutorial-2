@@ -32,8 +32,7 @@ The same `agent.py` is reused unchanged across every module.
   Externally-Hosted Agent and read its trace panel. Modules 01–04 need
   AM env vars; module 00 runs without AM. The fastest path is to sign
   up for the cloud version at
-  [console.agent-manager.cloud.wso2.com](https://console.agent-manager.cloud.wso2.com)
-  — no local deployment needed.
+  [console.agent-manager.cloud.wso2.com](https://console.agent-manager.cloud.wso2.com).
 - An OpenAI API key (`OPENAI_API_KEY=sk-...`).
 - A clone of this repo.
 
