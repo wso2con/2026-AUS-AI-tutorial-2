@@ -68,8 +68,17 @@ def book(req: BookingRequest, authorization: str | None = Header(None)) -> dict:
             status_code=403, detail=f"Missing scope: {REQUIRED_SCOPE}"
         )
 
-    actor = claims.get("sub")
-    on_behalf_of = (claims.get("act") or {}).get("sub")
+    # Per RFC 8693 §4.1, the `act` claim names the actor currently
+    # presenting the token, and `sub` names the principal whose authority
+    # is delegated. For a plain client_credentials token (no delegation)
+    # there is no `act` claim and `sub` is the agent acting alone.
+    act_claim = claims.get("act")
+    if act_claim:
+        actor = act_claim.get("sub")
+        on_behalf_of = claims.get("sub")
+    else:
+        actor = claims.get("sub")
+        on_behalf_of = None
     log.info(
         "BOOKING confirmed | caller=%s | on_behalf_of=%s | scopes=%s",
         actor,

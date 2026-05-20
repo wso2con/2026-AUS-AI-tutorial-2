@@ -104,12 +104,14 @@ def token(
     }
 
     if grant_type == "client_credentials":
-        # Agent acting alone. No `act` claim.
+        # Agent acting alone. sub=agent, no `act` claim.
         pass
 
     elif grant_type == "urn:ietf:params:oauth:grant-type:token-exchange":
         # Agent acting on behalf of a user. Validate the subject token,
-        # extract the user, and embed in the `act` claim per RFC 8693.
+        # extract the user, and emit a JWT shaped per RFC 8693 §4.1:
+        # `sub` is the principal whose authority is delegated (the user),
+        # `act.sub` is the actor presenting the token (the agent).
         if not subject_token:
             raise HTTPException(status_code=400, detail="subject_token required")
         try:
@@ -121,7 +123,8 @@ def token(
             )
         except jwt.PyJWTError as e:
             raise HTTPException(status_code=400, detail=f"Invalid subject_token: {e}")
-        payload["act"] = {"sub": user_claims["sub"]}
+        payload["sub"] = user_claims["sub"]
+        payload["act"] = {"sub": client_id}
 
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported grant_type: {grant_type}")

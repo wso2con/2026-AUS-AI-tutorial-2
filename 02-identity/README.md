@@ -155,8 +155,10 @@ curl -s -X POST http://localhost:8000/chat \
 Inside the agent, `book_room` exchanges that user token for an
 agent-acting-on-user token via `identity.get_user_acting_token`, which
 calls the IdP's `/oauth2/token` with `grant_type=token-exchange`. The
-response is a JWT with `sub=grand-meridian-concierge` (the agent) and
-`act={sub: user-42}` (the user the agent is acting for).
+response is a JWT shaped per RFC 8693 §4.1: `sub=user-42` (the
+principal whose authority is being delegated) and
+`act={sub: grand-meridian-concierge}` (the agent that is acting on the
+user's behalf).
 
 The booking service log becomes:
 
@@ -179,9 +181,10 @@ chain in-band:
 }
 ```
 
-- `actor` — the agent that signed the call to the booking service.
-- `on_behalf_of` — the user the agent was acting for, sourced from the
-  `act` claim in the token-exchange JWT.
+- `actor` — the agent that signed the call to the booking service,
+  read from the `act.sub` claim of the JWT.
+- `on_behalf_of` — the user the agent was acting for, read from the
+  `sub` claim of the JWT (the original principal per RFC 8693).
 - `confirmation` — ties this booking to a specific reservation record.
 
 ## Or: try it in the browser
